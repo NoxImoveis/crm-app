@@ -37,6 +37,18 @@ export default function CadastroPage() {
       return;
     }
 
+    if (!accountType) {
+      setError("Por favor, selecione o tipo de conta.");
+      setIsLoading(false);
+      return;
+    }
+
+    if ((accountType === 'imobiliaria' || accountType === 'corretor-vinculado') && !realEstate) {
+      setError("Por favor, selecione uma imobiliária.");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // 1. Criar o usuário no Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -45,13 +57,18 @@ export default function CadastroPage() {
       // 2. Criar o documento do usuário no Firestore
       await setDoc(doc(db, "usuarios", user.uid), {
         email: user.email,
+        tipoConta: accountType,
+        imobiliaria: accountType === 'corretor-vinculado' ? realEstate : (accountType === 'imobiliaria' ? realEstate : ''),
         aprovado: false, // O ponto-chave da nossa regra de negócio!
         criadoEm: new Date(),
+        metodoCadastro: 'email',
       });
       
       setSuccess("Cadastro realizado com sucesso! Aguarde a aprovação do administrador para fazer o login.");
       setEmail('');
       setPassword('');
+      setAccountType('');
+      setRealEstate('');
 
     } catch (error: any) {
       // Tratamento de erros comuns do Firebase
@@ -73,6 +90,20 @@ export default function CadastroPage() {
     setIsGoogleLoading(true);
     setError(null);
     setSuccess(null);
+
+    // Validação dos campos obrigatórios
+    if (!accountType) {
+      setError("Por favor, selecione o tipo de conta.");
+      setIsGoogleLoading(false);
+      return;
+    }
+
+    if ((accountType === 'imobiliaria' || accountType === 'corretor-vinculado') && !realEstate) {
+      setError("Por favor, selecione uma imobiliária.");
+      setIsGoogleLoading(false);
+      return;
+    }
+
     try {
       console.log('Chamando signInWithPopup...');
       const result = await signInWithPopup(auth, googleProvider);
@@ -94,13 +125,15 @@ export default function CadastroPage() {
       }
       
       console.log('Criando novo usuário no Firestore...');
-      // Criar documento no Firestore
+      // Criar documento no Firestore com os novos campos
       await setDoc(userDocRef, {
         email: user.email,
         nome: user.displayName || 'Usuário Google',
         telefone: user.phoneNumber || '',
         empresa: '',
         cargo: '',
+        tipoConta: accountType,
+        imobiliaria: accountType === 'corretor-vinculado' ? realEstate : (accountType === 'imobiliaria' ? realEstate : ''),
         aprovado: false,
         criadoEm: new Date(),
         metodoCadastro: 'google',
@@ -137,7 +170,8 @@ export default function CadastroPage() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Campos compartilhados entre ambos os métodos de cadastro */}
+          <div className="space-y-4 mb-6">
             <div>
               <label htmlFor="accountType" className="block text-sm font-medium text-softgray-700 mb-1">
                 Tipo de conta
@@ -197,7 +231,9 @@ export default function CadastroPage() {
                 )}
               </div>
             )}
+          </div>
 
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-softgray-700 mb-1">
                 E-mail
