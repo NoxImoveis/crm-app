@@ -13,6 +13,16 @@ export default function CadastroPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [accountType, setAccountType] = useState('');
+  const [realEstate, setRealEstate] = useState('');
+  const [realEstateOptions, setRealEstateOptions] = useState([
+    'Imobiliária Alpha',
+    'Imobiliária Beta',
+    'Imobiliária Gamma',
+    'Imobiliária Delta',
+  ]);
+  const [filteredOptions, setFilteredOptions] = useState<string[]>(realEstateOptions);
+  const [showOptions, setShowOptions] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +138,66 @@ export default function CadastroPage() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="accountType" className="block text-sm font-medium text-softgray-700 mb-1">
+                Tipo de conta
+              </label>
+              <select
+                id="accountType"
+                name="accountType"
+                required
+                value={accountType}
+                onChange={e => setAccountType(e.target.value)}
+                className="w-full px-4 py-3 border border-softgray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white transition-colors"
+              >
+                <option value="" disabled>Selecione...</option>
+                <option value="imobiliaria">Imobiliária</option>
+                <option value="corretor-autonomo">Corretor autônomo</option>
+                <option value="corretor-vinculado">Corretor vinculado a imobiliária</option>
+              </select>
+            </div>
+            {(accountType === 'imobiliaria' || accountType === 'corretor-vinculado') && (
+              <div className="relative">
+                <label htmlFor="realEstate" className="block text-sm font-medium text-softgray-700 mb-1">
+                  Imobiliária
+                </label>
+                <input
+                  id="realEstate"
+                  name="realEstate"
+                  type="text"
+                  autoComplete="off"
+                  value={realEstate}
+                  onChange={e => {
+                    setRealEstate(e.target.value);
+                    setFilteredOptions(realEstateOptions.filter(opt =>
+                      opt.toLowerCase().includes(e.target.value.toLowerCase())
+                    ));
+                    setShowOptions(true);
+                  }}
+                  onFocus={() => setShowOptions(true)}
+                  onBlur={() => setTimeout(() => setShowOptions(false), 100)}
+                  className="w-full px-4 py-3 border border-softgray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white transition-colors"
+                  placeholder="Digite para buscar..."
+                />
+                {showOptions && filteredOptions.length > 0 && (
+                  <ul className="absolute z-20 bg-white border border-softgray-300 rounded-lg mt-1 w-full max-h-40 overflow-y-auto shadow-lg">
+                    {filteredOptions.map(option => (
+                      <li
+                        key={option}
+                        className="px-4 py-2 cursor-pointer hover:bg-primary-50"
+                        onMouseDown={() => {
+                          setRealEstate(option);
+                          setShowOptions(false);
+                        }}
+                      >
+                        {option}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-softgray-700 mb-1">
                 E-mail
